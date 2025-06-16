@@ -513,15 +513,15 @@ export const checkImageQuality = async (imageUrl: string): Promise<{
 // Estimar valores OHLC com base na posição e tamanho dos candles
 const estimateOHLCValues = (candles: CandleData[]): void => {
   // Ordenar candles horizontalmente (presumindo que o eixo x representa o tempo)
-  candles.sort((a, b) => a.position.x - b.position.x);
+  candles.sort((a, b) => a.position!.x - b.position!.x); // Usar ! para indicar que position não é nulo
   
   // Encontrar o range vertical para normalização
   let minY = Number.MAX_VALUE;
   let maxY = Number.MIN_VALUE;
   
   for (const candle of candles) {
-    const top = candle.position.y - candle.height / 2;
-    const bottom = candle.position.y + candle.height / 2;
+    const top = candle.position!.y - candle.height! / 2; // Usar !
+    const bottom = candle.position!.y + candle.height! / 2; // Usar !
     
     minY = Math.min(minY, top);
     maxY = Math.max(maxY, bottom);
@@ -535,8 +535,8 @@ const estimateOHLCValues = (candles: CandleData[]): void => {
   
   // Calcular valores OHLC para cada candle
   for (const candle of candles) {
-    const top = candle.position.y - candle.height / 2;
-    const bottom = candle.position.y + candle.height / 2;
+    const top = candle.position!.y - candle.height! / 2; // Usar !
+    const bottom = candle.position!.y + candle.height! / 2; // Usar !
     
     // Normalizar para o range de preço
     const normalizedTop = 1 - (top - minY) / range;
@@ -719,7 +719,7 @@ const segmentCandlePatterns = (
               visited.add(nidx);
             }
           }
-        }
+        }\
       }
       
       // Filtrar segmentos muito pequenos (ruído) ou muito grandes (não candles)
@@ -833,7 +833,7 @@ const detectSupportResistanceLines = (
       // Detectar pixels escuros (possíveis linhas)
       if (data[i] + data[i + 1] + data[i + 2] < 150 * 3) {
         horizontalDensity[y]++;
-      }
+      }\
     }
   }
   
@@ -947,7 +947,7 @@ const generateTechnicalElementsFromDetection = (
   // Detectar tendências de preço usando os candles
   if (candles.length > 5) {
     // Ordenar candles por posição x (tempo)
-    const sortedCandles = [...candles].sort((a, b) => a.position.x - b.position.x);
+    const sortedCandles = [...candles].sort((a, b) => a.position!.x - b.position!.x); // Usar !
     
     // Extrair preços de fechamento para análise de tendência
     const prices = sortedCandles.map(c => c.close);
@@ -970,14 +970,14 @@ const generateTechnicalElementsFromDetection = (
       const isBullish = slope > 0;
       const startCandle = sortedCandles[0];
       const endCandle = sortedCandles[sortedCandles.length - 1];
-      const startY = startCandle.position.y;
-      const endY = endCandle.position.y - (slope * (endCandle.position.x - startCandle.position.x));
+      const startY = startCandle.position!.y; // Usar !
+      const endY = endCandle.position!.y - (slope * (endCandle.position!.x - startCandle.position!.x)); // Usar !
       
       technicalElements.push({
         type: 'line',
         points: [
-          { x: startCandle.position.x, y: startY },
-          { x: endCandle.position.x, y: endY }
+          { x: startCandle.position!.x, y: startY }, // Usar !
+          { x: endCandle.position!.x, y: endY } // Usar !
         ],
         color: isBullish ? '#22c55e' : '#ef4444',
         thickness: 2,
@@ -987,7 +987,7 @@ const generateTechnicalElementsFromDetection = (
       // Adicionar rótulo indicando a tendência
       technicalElements.push({
         type: 'label',
-        position: { x: endCandle.position.x - 100, y: endY - 20 },
+        position: { x: endCandle.position!.x - 100, y: endY - 20 }, // Usar !
         text: isBullish ? 'Tendência de Alta' : 'Tendência de Baixa',
         color: isBullish ? '#22c55e' : '#ef4444',
         backgroundColor: '#1e293b'
@@ -1009,7 +1009,7 @@ const generateTechnicalElementsFromDetection = (
       if (lowerShadow > 2 * candleSize && upperShadow < 0.5 * candleSize) {
         technicalElements.push({
           type: 'circle',
-          center: { x: currCandle.position.x, y: currCandle.position.y },
+          center: { x: currCandle.position!.x, y: currCandle.position!.y }, // Usar !
           radius: 15,
           color: '#3b82f6',
           thickness: 2
@@ -1017,7 +1017,7 @@ const generateTechnicalElementsFromDetection = (
         
         technicalElements.push({
           type: 'label',
-          position: { x: currCandle.position.x - 30, y: currCandle.position.y - 30 },
+          position: { x: currCandle.position!.x - 30, y: currCandle.position!.y - 30 }, // Usar !
           text: 'Martelo',
           color: '#3b82f6',
           backgroundColor: '#1e293b'
@@ -1028,7 +1028,7 @@ const generateTechnicalElementsFromDetection = (
       if (candleSize < 0.1 * (upperShadow + lowerShadow) && (upperShadow + lowerShadow) > 0) {
         technicalElements.push({
           type: 'circle',
-          center: { x: currCandle.position.x, y: currCandle.position.y },
+          center: { x: currCandle.position!.x, y: currCandle.position!.y }, // Usar !
           radius: 15,
           color: '#f59e0b',
           thickness: 2
@@ -1036,7 +1036,7 @@ const generateTechnicalElementsFromDetection = (
         
         technicalElements.push({
           type: 'label',
-          position: { x: currCandle.position.x - 20, y: currCandle.position.y - 30 },
+          position: { x: currCandle.position!.x - 20, y: currCandle.position!.y - 30 }, // Usar !
           text: 'Doji',
           color: '#f59e0b',
           backgroundColor: '#1e293b'
@@ -1052,12 +1052,7 @@ export const processChartImage = async (imageUrl: string): Promise<CandleData[]>
   console.log(`Iniciando processamento real da imagem: ${imageUrl}`);
 
   try {
-    // 1. Detectar a região do gráfico (se não houver uma selecionada manualmente)
-    // Por agora, vamos assumir que a imagem já é o gráfico ou que a região foi selecionada
-    // Se você usa ChartRegionSelector, ele já define selectedRegion.
-    // Aqui, vamos processar a imagem inteira ou uma região pré-definida para simplificar a integração inicial.
-    // Para uma abordagem mais robusta, você passaria `selectedRegion` para esta função.
-
+    // 1. Carregar a imagem
     const img = new Image();
     img.src = imageUrl;
 
