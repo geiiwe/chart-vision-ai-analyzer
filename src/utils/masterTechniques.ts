@@ -1,3 +1,5 @@
+import { CandleData } from '../context/AnalyzerContext';
+import { detectCandlestickPatterns } from './candlestickPatternDetection';
 
 // Técnicas dos Mestres da Análise Técnica
 // Baseado em Bulkowski, Edwards & Magee, Elder, Murphy
@@ -146,8 +148,13 @@ export const murphyTechnicalAnalysis = (): MurphyTechnical => {
 };
 
 // Função para integrar todas as análises
-export const getMasterAnalysis = (timeframe: string, patternType: string) => {
-  const bulkowski = bulkowskiPatterns[patternType];
+export const getMasterAnalysis = (timeframe: string, patternType: string, candles: CandleData[]) => {
+  // Detectar padrões de candlestick usando os candles reais
+  const detectedCandlePatterns = detectCandlestickPatterns(candles);
+  
+  // Priorizar o primeiro padrão detectado ou fallback para o tipo de padrão fornecido
+  const primaryPattern = detectedCandlePatterns.length > 0 ? detectedCandlePatterns[0].type : patternType;
+  const bulkowski = bulkowskiPatterns[primaryPattern];
   const tripleScreen = analyzeTripleScreen(timeframe);
   const murphy = murphyTechnicalAnalysis();
   
@@ -155,6 +162,7 @@ export const getMasterAnalysis = (timeframe: string, patternType: string) => {
     bulkowski,
     tripleScreen,
     murphy,
+    detectedCandlePatterns,
     masterRecommendation: generateMasterRecommendation(bulkowski, tripleScreen, murphy)
   };
 };

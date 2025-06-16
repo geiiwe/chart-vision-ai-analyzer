@@ -1047,3 +1047,21 @@ const generateTechnicalElementsFromDetection = (
   
   return technicalElements;
 };
+
+export const processChartImage = async (imageUrl: string): Promise<CandleData[]> => {
+  // Nesta função, a lógica real de visão computacional seria implementada
+  // para analisar a imagem e extrair os dados dos candles.
+  // Por enquanto, retornaremos dados simulados para demonstrar o fluxo.
+  console.log(`Processando imagem: ${imageUrl}`);
+
+  // Exemplo de dados de candles simulados
+  const simulatedCandles: CandleData[] = [
+    { open: 100, high: 105, low: 98, close: 103, timestamp: Date.now() - 5 * 60 * 1000, color: 'verde' },
+    { open: 103, high: 107, low: 101, close: 106, timestamp: Date.now() - 4 * 60 * 1000, color: 'verde' },
+    { open: 106, high: 108, low: 104, close: 105, timestamp: Date.now() - 3 * 60 * 1000, color: 'vermelho' },
+    { open: 105, high: 106, low: 99, close: 100, timestamp: Date.now() - 2 * 60 * 1000, color: 'vermelho' },
+    { open: 100, high: 102, low: 97, close: 101, timestamp: Date.now() - 1 * 60 * 1000, color: 'verde' },
+  ];
+
+  return simulatedCandles;
+};
