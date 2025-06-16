@@ -2,7 +2,7 @@
  * Image processing utilities for chart analysis
  */
 
-import { SelectedRegion, CandleData, TechnicalElement } from '@/context/AnalyzerContext';
+import { SelectedRegion, CandleData, TechnicalElement, Point } from '@/context/AnalyzerContext';
 
 // Process the captured image to enhance chart features
 export const processImage = async (imageUrl: string): Promise<{success: boolean; data: string; error?: string}> => {
@@ -1049,19 +1049,83 @@ const generateTechnicalElementsFromDetection = (
 };
 
 export const processChartImage = async (imageUrl: string): Promise<CandleData[]> => {
-  // Nesta função, a lógica real de visão computacional seria implementada
-  // para analisar a imagem e extrair os dados dos candles.
-  // Por enquanto, retornaremos dados simulados para demonstrar o fluxo.
-  console.log(`Processando imagem: ${imageUrl}`);
+  console.log(`Iniciando processamento real da imagem: ${imageUrl}`);
 
-  // Exemplo de dados de candles simulados
-  const simulatedCandles: CandleData[] = [
-    { open: 100, high: 105, low: 98, close: 103, timestamp: Date.now() - 5 * 60 * 1000, color: 'verde' },
-    { open: 103, high: 107, low: 101, close: 106, timestamp: Date.now() - 4 * 60 * 1000, color: 'verde' },
-    { open: 106, high: 108, low: 104, close: 105, timestamp: Date.now() - 3 * 60 * 1000, color: 'vermelho' },
-    { open: 105, high: 106, low: 99, close: 100, timestamp: Date.now() - 2 * 60 * 1000, color: 'vermelho' },
-    { open: 100, high: 102, low: 97, close: 101, timestamp: Date.now() - 1 * 60 * 1000, color: 'verde' },
-  ];
+  try {
+    // 1. Detectar a região do gráfico (se não houver uma selecionada manualmente)
+    // Por agora, vamos assumir que a imagem já é o gráfico ou que a região foi selecionada
+    // Se você usa ChartRegionSelector, ele já define selectedRegion.
+    // Aqui, vamos processar a imagem inteira ou uma região pré-definida para simplificar a integração inicial.
+    // Para uma abordagem mais robusta, você passaria `selectedRegion` para esta função.
 
-  return simulatedCandles;
+    const img = new Image();
+    img.src = imageUrl;
+
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = (e) => reject(new Error(`Falha ao carregar a imagem: ${e}`));
+    });
+
+    const canvas = document.createElement('canvas');
+    canvas.width = img.width;
+    canvas.height = img.height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      throw new Error('Não foi possível obter contexto 2D do canvas.');
+    }
+    ctx.drawImage(img, 0, 0);
+
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imageData.data;
+
+    // Opcional: Processamento para realçar candles antes da segmentação (como `enhanceEdges`)
+    // const enhancedData = enhanceEdges(data, canvas.width, canvas.height);
+    // highlightCandleColors(enhancedData, canvas.width, canvas.height);
+    // (você pode optar por usar os dados originais ou os realçados para segmentação)
+
+    // 2. Segmentar os candles
+    const segments = segmentCandlePatterns(data, canvas.width, canvas.height);
+    console.log(`Segmentos detectados: ${segments.length}`);
+
+    // 3. Analisar cada segmento e converter em CandleData
+    let detectedCandles: CandleData[] = [];
+    for (const segment of segments) {
+      const candleInfo = analyzeCandleSegment(segment, data, canvas.width, canvas.height);
+      if (candleInfo) {
+        // Adicionar o timestamp. Uma forma simples é usar um intervalo fixo.
+        // Em um sistema real, o timestamp viria do próprio gráfico ou da corretora.
+        const timestamp = Date.now() - (segments.indexOf(segment) * 60 * 1000); // Exemplo: 1 minuto de intervalo
+        detectedCandles.push({
+          open: 0, // Será estimado por estimateOHLCValues
+          high: 0, // Será estimado por estimateOHLCValues
+          low: 0,  // Será estimado por estimateOHLCValues
+          close: 0, // Será estimado por estimateOHLCValues
+          timestamp,
+          color: candleInfo.color,
+          position: { x: candleInfo.x + candleInfo.width / 2, y: candleInfo.y + candleInfo.height / 2 },
+          width: candleInfo.width,
+          height: candleInfo.height,
+        });
+      }
+    }
+
+    // 4. Estimar valores OHLC e ajustar posição/tamanho
+    // As funções `estimateOHLCValues` e `generateTechnicalElementsFromDetection`
+    // já existem e podem ser usadas aqui.
+    // Note: estimateOHLCValues modifica os objetos candles in-place.
+    estimateOHLCValues(detectedCandles);
+    console.log('Candles com OHLC estimados:', detectedCandles);
+
+    // Opcional: Aqui você pode gerar TechnicalElements a partir de candles e linhas detectadas
+    // const detectedLines = detectSupportResistanceLines(data, canvas.width, canvas.height);
+    // const technicalElements = generateTechnicalElementsFromDetection(detectedCandles, detectedLines, canvas.width, canvas.height);
+    // console.log('Elementos técnicos gerados:', technicalElements);
+
+    return detectedCandles;
+
+  } catch (error) {
+    console.error('Erro no processamento real da imagem:', error);
+    // Retornar um array vazio ou lidar com o erro conforme a necessidade do app
+    return [];
+  }
 };
